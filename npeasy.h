@@ -340,8 +340,7 @@ class MCMF//miminum cost maximum flow
 	int roundCounter;//最短路径更新的轮数
 //	bool isAvailabe;
 public:
-	MCMF(int userN, userNode *users_, int nodeN,bool *hasServer_,int routeN,int deployC,const EdgeWeithtedGraph& grap,int roundCounter_);
-	MCMF(int userN, userNode *users_, int nodeN, bool *hasServer_, int routeN, int deployC, const EdgeWeithtedGraph& grap, int roundCounter_, bool fly);
+	MCMF(int userN, userNode *users_,int nodeN,bool *hasServer_,int routeN,int deployC,const EdgeWeithtedGraph& grap,int roundCounter_);
 	~MCMF();
 	int getCurrentCost() { return solution::currentCost; }
 	int getDeployedServer()
