@@ -404,18 +404,17 @@ void DijistraSP::calculateAjiUserVersion(EdgeWeithtedGraph & graph, bool * hasSe
 
 			bool ikeru = true;
 			int size = int(_path.size());
-			if (size == 0) continue;
-//			int minCapacity = INT_MAX;
+			int minCapacity = INT_MAX;
 			for (int i = 0; i < size; i++)
 			{
                 
 				if (_path[i] && _path[i]->capacity == 0)
 				{
-//					minCapacity = 0;
+					minCapacity = 0;
 					ikeru = false;
 					break;
 				}
-//                minCapacity = min(_path[i]->capacity, minCapacity);
+                minCapacity = min(_path[i]->capacity, minCapacity);
 			}
 			if (!ikeru) continue;
 			unitPriceFromServerToUser unitPrice;
@@ -1243,7 +1242,7 @@ void seedGeneratorDirect(bool * ndstring, int nodeNum, double lambda, userNode *
 		ndstring[i] = false;
 	for(int i = 0; i < userNum; i++)
 	{
-		if (/*checkDirect(users[i], graph, deployCost) ||*/ users[i].get_current_demand() > (double) lambda*deployCost / avgPrice)
+		if (checkDirect(users[i], graph, deployCost) /*|| users[i].get_current_demand() > (double) lambda*deployCost / avgPrice*/)
 			ndstring[users[i].get_adj()] = true;
 	}
 }
@@ -1697,159 +1696,6 @@ MCMF::MCMF(int userN, userNode *users_, int nodeN, bool *hasServer_, int routeN,
 	if (dij)
 		delete[]dij;
 	solutions.resize(solutions.size());
-}
-
-MCMF::MCMF(int userN, userNode * users_, int nodeN, bool * hasServer_, int routeN, int deployC, const EdgeWeithtedGraph & grap, int roundCounter_, bool fly) : userNum(userN), nodeNum(nodeN), deployCost(deployC), routeNum(routeN), graph(grap)
-{
-	solutions.reserve(MAX_SOLUTION_NUM);
-	roundCounter = roundCounter_;
-	solution::currentCost = 0;
-	users = new userNode[userNum];
-	for (int i = 0; i < userNum; i++)
-	{
-		users[i] = users_[i];
-	}
-
-	hasServer = new bool[nodeNum];
-	for (int i = 0; i < nodeNum; i++)
-	{
-		hasServer[i] = hasServer_[i];
-	}
-
-	DijistraSP **dij = new DijistraSP*[nodeNum];
-	for (int i = 0; i < nodeNum; i++)
-		dij[i] = NULL;
-	int roundC = 0;
-	int newnew = 0;
-
-
-	for (int i = 0; i < userNum; i++)
-	{
-		if (checkDirect(users[i], graph, deployCost))
-			directServer(i, users, hasServer, solutions);
-	}
-
-	int directCost = userNum*deployCost;
-
-	bool newServerBuilt = true;
-	while (newServerBuilt)
-	{
-		newServerBuilt = false;
-		for (int i = 0; i < userNum; i++)
-		{
-			if (!users[i].isSatisfied())
-			{
-				DijistraSP * dji = new DijistraSP(graph, users[i].get_adj(), nodeNum);
-				pqForAij aji;
-				dji->calculateAjiUserVersion(graph, hasServer, nodeNum, users, i, aji);
-				if (checkDirect(users[i], graph, deployCost, aji))
-				{
-					directServer(i, users, hasServer, solutions);
-					newServerBuilt = true;
-				}
-			}
-		}
-	}
-
-
-	int roundCounter = 0;
-	while (!isAllDemandSatisfied(userNum, users))
-	{
-		costFromServerToUser minCij;
-		newServer minServer;
-		double t1;
-		for (int i = 0; i < nodeNum; i++)//已开通节点
-		{
-			if (hasServer[i])
-			{
-				pqForAij aij;
-				pqForCij cij;
-				if (!dij[i])
-					dij[i] = new DijistraSP(graph, i, nodeNum);
-				dij[i]->calculateAijCiteVersion(graph, userNum, users, aij);//已保证输出的路径都是可以走的
-				if (aij.size() == 0)//i到j无路可走，跳过本次循环
-					continue;
-				pqForAij topAij;
-				unitPriceFromServerToUser best = aij.top();
-				int lowCost = best.cost;
-				while (!aij.empty() && aij.top().cost <= lowCost)
-				{
-					if (best.getCapacity() < aij.top().getCapacity())
-						best = aij.top();
-					aij.pop();
-				}
-				topAij.push(best);
-				calculateCij(topAij, cij);
-				costFromServerToUser temp = cij.top();
-				if (minCij.getPrice() > temp.getPrice() || (minCij.getPrice() == temp.getPrice() && minCij.getValue() < temp.getValue()))
-					minCij = temp;
-			}
-		}
-
-		t1 = minCij.getValue();
-		//		cout << "t1 = " << t1  << endl;
-		if (t1 < deployCost)
-		{
-			minCij.update(solutions, hasServer);
-			int userIndex = minCij.getUserIndex();
-			if (users[userIndex].get_band_cost() > deployCost)
-			{
-				directServer(userIndex, users, hasServer, solutions);
-				updateSolution(solutions, minCij.getServer(), users);
-				newUpdateSolution(hasServer, graph, solutions, users[userIndex].get_adj(), userNum, users);
-
-			}
-		}
-		else if (t1 < 2000000000)
-		{
-			directServer(minCij.getUserIndex(), users, hasServer, solutions);
-			updateSolution(solutions, minCij.getServer(), users);
-			newUpdateSolution(hasServer, graph, solutions, users[minCij.getUserIndex()].get_adj(), userNum, users);
-			/*int serverIndex = minCij.getServer();
-			pqForAij aij;
-			pqForCij cij;
-			if (!dij[serverIndex])
-			dij[serverIndex] = new DijistraSP(*graph, serverIndex, nodeNum);
-			dij[serverIndex]->calculateAijCiteVersion(*graph, userNum, users, aij);*/
-		}
-		else
-		{
-			for (int i = 0; i < nodeNum; i++)
-			{
-				if (!hasServer[i])
-				{
-					pqForAij aij;
-					pqForCij cij;
-					if (!dij[i])
-						dij[i] = new DijistraSP(graph, i, nodeNum);
-					dij[i]->calculateAijCiteVersion(graph, userNum, users, aij);//已保证输出的路径都是可以走的
-					if (aij.size() == 0)//i到j无路可走，跳过本次循环
-						continue;
-					priority_queue< int> cijValue;
-					calculateCij(aij, cij, cijValue);
-					newServer temp;
-					temp.calculateShareCost(i, deployCost, cijValue, cij);
-					if (minServer > temp)
-						minServer = temp;
-				}
-			}
-			//			cout << "build a new server at " << minServer.getNode() << endl;
-			hasServer[minServer.getNode()] = true;
-			updateSolution(solutions, minServer.getNode(), users);
-			newUpdateSolution(hasServer, graph, solutions, minServer.getNode(), userNum, users);
-
-		}
-
-		if (calcTotalCost(nodeNum, hasServer, deployCost) > directCost) { break; }
-
-		++roundCounter;
-		if (roundCounter == 10)
-		{
-			roundCounter = 0;
-			clearDij(nodeNum, dij);
-		}
-
-	}
 }
 
 MCMF::~MCMF()

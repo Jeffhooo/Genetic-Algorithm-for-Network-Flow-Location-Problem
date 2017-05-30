@@ -28,7 +28,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num, char * filename)
 	int minPrice = INT_MAX;//边最小单价
 	int minDemand = INT_MAX;//用户最小需求
 	int DijUpdateRound = 10;//最短路径更新轮数
-	int stringNum = 20;//群体中个体的数量
+	int stringNum;//群体中个体的数量
 	double muteRate = 0.005;//变异率
 	double crossRate = 0.05;//交叉率
 	srand(time(NULL));//以当前时间作为随机数种子
@@ -42,8 +42,8 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num, char * filename)
 		           minCapacity, minDemand, minPrice, 
 		           pqUsers, graph); //初始化,已验证	
 
-	//if (deployCost < 700) stringNum = 73;
-	//else                  stringNum = 18;
+	if (deployCost < 700) stringNum = 73;
+	else                  stringNum = 18;
 
 	int GenCounter = 0; //记录遗传算法进行了多少代
 
@@ -54,23 +54,20 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num, char * filename)
 		vector<solution> bestSolutions;
 		int LowestCost = INT_MAX;
 
-		for (int j = 0; j < 5; j++)
+		for (int j = 0; j < 1; j++)
 		{
 			bool *nsCheckDirect = new bool[nodeNum];
 			for (int i = 0; i < nodeNum; i++)
 				nsCheckDirect[i] = false;
 			
-			double lambda[4] = { 0.6, 0.7, 0.9, 1.0 };
+			//for (int i = 0; i < userNum; i++)
+			//{
+			//	if (checkDirect(users[i], *graph, (double)deployCost) || users[i].get_current_demand() > deployCost*(0.3+j*0.1) / avgPrice) {
+			//		nsCheckDirect[users[i].get_adj()] = true;
+			//	}
+			//}
 
-			for (int i = 0; i < userNum; i++)
-			{
-				if (/*checkDirect(users[i], *graph, (double)deployCost) || */( j != 0 && users[i].get_current_demand() > (double)deployCost*lambda[j-1] / avgPrice)) {
-//					cout << "llll" << endl;
-					nsCheckDirect[users[i].get_adj()] = true;
-				}
-			}
-
-			MCMF minCostMaxFlowAlgorithm(userNum, users, nodeNum, nsCheckDirect, routeNum, deployCost, *graph, DijUpdateRound,true);
+			MCMF minCostMaxFlowAlgorithm(userNum, users, nodeNum, nsCheckDirect, routeNum, deployCost, *graph, DijUpdateRound);
 			int cost = minCostMaxFlowAlgorithm.getTotalCost();
 			vector<solution> tempSolutions = minCostMaxFlowAlgorithm.getSolution();
 			if (cost < LowestCost)
@@ -88,111 +85,111 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num, char * filename)
 	{	
         vector<nodeString> GenGroup;
 	
-//        bool *nsNotAdj = new bool[nodeNum];
-//		bool *nsDirect = new bool[nodeNum];
-//		bool *nsDemand = new bool[nodeNum];
-//		bool *nsCross = new bool[nodeNum];
-//		bool *nsBigSource = new bool[nodeNum];
-//		bool *nsConbine = new bool[nodeNum];
-//		bool *nsEmpty = new bool[nodeNum];
-//
+        bool *nsNotAdj = new bool[nodeNum];
+		bool *nsDirect = new bool[nodeNum];
+		bool *nsDemand = new bool[nodeNum];
+		bool *nsCross = new bool[nodeNum];
+		bool *nsBigSource = new bool[nodeNum];
+		bool *nsConbine = new bool[nodeNum];
+		bool *nsEmpty = new bool[nodeNum];
+
 		vector<solution> bestSolutions;
 		int LowestCost = INT_MAX;
-//		double percentage;
-//		if (deployCost < 700)
-//			percentage = 0.05;
-//		else
-//			percentage = 0.05;
-//        int * contribution = new int[nodeNum];
-//		for (int i = 0; i < nodeNum; i++)
-//		{
-//			nsConbine[i] = false;
-//			nsEmpty[i] = false;
-//			contribution[i] = 0;
-//		}
-//		for (int i = 0; i < 10; i++)
-//		{
-//			bool * ndstring = new bool[nodeNum];
-//			seedGeneratorAllRandom(ndstring, nodeNum, 0.4, userNum);
-//			MCMF minCostMaxFlowAlgorithm(userNum, users, nodeNum, ndstring, routeNum, deployCost, *graph, DijUpdateRound);
-//			int cost = minCostMaxFlowAlgorithm.getTotalCost();
-//			vector<solution> tempSolutions = minCostMaxFlowAlgorithm.getSolution();
-//			if (cost < LowestCost)
-//			{
-////				cout << "Miracle! " << (double)cost / (deployCost*userNum) << endl;
-//				bestSolutions = tempSolutions;
-//				LowestCost = cost;
-//			}
-//			pqForContribution pqCon;
-//			calculateServerContribution(nodeNum, tempSolutions, pqCon);
-//			for (int i = 0; i < 10; i++)
-//			{
-//				contribution[pqCon.top().getServerIndex()] += 1;
-//				pqCon.pop();
-//			}
-//			delete[] ndstring;
-//		}
-
-//		pqForContribution pqFinalCon;		
-//		calculatePqNotAdj(pqFinalCon, contribution, nodeNum);		
-//		seedGeneratorNotAdj(nsNotAdj, nodeNum, pqFinalCon, 0.3, users, userNum);
-//
-//		pqForContribution pqCross;
-//        calculatePqCross(pqCross, *graph, nodeNum, deployCost, userNum, users);
-//		seedGeneratorCross(nsCross, nodeNum, pqCross, 0.1, userNum);
-//
-//		pqForContribution pqBigSource;
-//		calculatePqCross(pqBigSource, *graph, nodeNum, deployCost, userNum, users);
-//		seedGeneratorCross(nsCross, nodeNum, pqBigSource, 0.1, userNum);
-//
-//		seedGeneratorDirect(nsDirect, nodeNum, 1.0, users, userNum, *graph, deployCost, avgPrice);
-//
-//		seedGeneratorDemand(nsDemand, nodeNum, 0.2, userNum, pqUsers);
-//
-////		seedGeneratorCombine(nsConbine, nsNotAdj, nodeNum);
-//		seedGeneratorCombine(nsConbine, nsDirect, nodeNum);
-//		seedGeneratorCombine(nsConbine, nsDemand, nodeNum);
-//		seedGeneratorCombine(nsConbine, nsCross, nodeNum);
-////		seedGeneratorCombine(nsConbine, nsBigSource, nodeNum);
-//
-//		GenGroup.push_back(nodeString(nodeNum, nsConbine));
-//		GenGroup.push_back(nodeString(nodeNum, nsCross));
-//		GenGroup.push_back(nodeString(nodeNum, nsBigSource));
-//		GenGroup.push_back(nodeString(nodeNum, nsDemand));
-//		GenGroup.push_back(nodeString(nodeNum, nsDirect));
-//		GenGroup.push_back(nodeString(nodeNum, nsNotAdj));
-//		GenGroup.push_back(nodeString(nodeNum, nsEmpty));
-
-		//for (int i = 0; i < (stringNum-7)/4; i++)
-		//{
-		//	bool *nsAllRandom0 = new bool[nodeNum];
-		//	seedGeneratorDirectRandom(nsAllRandom0, nodeNum, 0.05, userNum, users);
-		//	GenGroup.push_back(nodeString(nodeNum, nsAllRandom0));
-		//	delete[] nsAllRandom0;
-		//}
-
-		//for (int i = 0; i < (stringNum-7)/4; i++)
-		//{
-		//	bool *nsAllRandom0 = new bool[nodeNum];
-		//	seedGeneratorDirectRandom(nsAllRandom0, nodeNum, 0.1, userNum, users);
-		//	GenGroup.push_back(nodeString(nodeNum, nsAllRandom0));
-		//	delete[] nsAllRandom0;
-		//}
-
-		//for (int i = 0; i < (stringNum-7)/4; i++)
-		//{
-		//	bool *nsAllRandom0 = new bool[nodeNum];
-		//	seedGeneratorDirectRandom(nsAllRandom0, nodeNum, 0.2, userNum, users);
-		//	GenGroup.push_back(nodeString(nodeNum, nsAllRandom0));
-		//	delete[] nsAllRandom0;
-		//}
-
-		for (int i = 0; i < stringNum; i++)
+		double percentage;
+		if (deployCost < 700)
+			percentage = 0.05;
+		else
+			percentage = 0.05;
+        int * contribution = new int[nodeNum];
+		for (int i = 0; i < nodeNum; i++)
 		{
-			bool *nsDirect = new bool[nodeNum];
-			seedGeneratorDirect(nsDirect, nodeNum, (double)0.1*i, users, userNum, *graph, deployCost, avgPrice);
-			GenGroup.push_back(nodeString(nodeNum, nsDirect));
-			delete[] nsDirect;
+			nsConbine[i] = false;
+			nsEmpty[i] = false;
+			contribution[i] = 0;
+		}
+		for (int i = 0; i < 10; i++)
+		{
+			bool * ndstring = new bool[nodeNum];
+			seedGeneratorAllRandom(ndstring, nodeNum, 0.4, userNum);
+			MCMF minCostMaxFlowAlgorithm(userNum, users, nodeNum, ndstring, routeNum, deployCost, *graph, DijUpdateRound);
+			int cost = minCostMaxFlowAlgorithm.getTotalCost();
+			vector<solution> tempSolutions = minCostMaxFlowAlgorithm.getSolution();
+			if (cost < LowestCost)
+			{
+//				cout << "Miracle! " << (double)cost / (deployCost*userNum) << endl;
+				bestSolutions = tempSolutions;
+				LowestCost = cost;
+			}
+			pqForContribution pqCon;
+			calculateServerContribution(nodeNum, tempSolutions, pqCon);
+			for (int i = 0; i < 10; i++)
+			{
+				contribution[pqCon.top().getServerIndex()] += 1;
+				pqCon.pop();
+			}
+			delete[] ndstring;
+		}
+
+		pqForContribution pqFinalCon;		
+		calculatePqNotAdj(pqFinalCon, contribution, nodeNum);		
+		seedGeneratorNotAdj(nsNotAdj, nodeNum, pqFinalCon, 0.3, users, userNum);
+
+		pqForContribution pqCross;
+        calculatePqCross(pqCross, *graph, nodeNum, deployCost, userNum, users);
+		seedGeneratorCross(nsCross, nodeNum, pqCross, 0.1, userNum);
+
+		pqForContribution pqBigSource;
+		calculatePqCross(pqBigSource, *graph, nodeNum, deployCost, userNum, users);
+		seedGeneratorCross(nsCross, nodeNum, pqBigSource, 0.1, userNum);
+
+		seedGeneratorDirect(nsDirect, nodeNum, 1.0, users, userNum, *graph, deployCost, avgPrice);
+
+		seedGeneratorDemand(nsDemand, nodeNum, 0.2, userNum, pqUsers);
+
+//		seedGeneratorCombine(nsConbine, nsNotAdj, nodeNum);
+		seedGeneratorCombine(nsConbine, nsDirect, nodeNum);
+		seedGeneratorCombine(nsConbine, nsDemand, nodeNum);
+		seedGeneratorCombine(nsConbine, nsCross, nodeNum);
+//		seedGeneratorCombine(nsConbine, nsBigSource, nodeNum);
+
+		GenGroup.push_back(nodeString(nodeNum, nsConbine));
+		GenGroup.push_back(nodeString(nodeNum, nsCross));
+		GenGroup.push_back(nodeString(nodeNum, nsBigSource));
+		GenGroup.push_back(nodeString(nodeNum, nsDemand));
+		GenGroup.push_back(nodeString(nodeNum, nsDirect));
+		GenGroup.push_back(nodeString(nodeNum, nsNotAdj));
+		GenGroup.push_back(nodeString(nodeNum, nsEmpty));
+
+		for (int i = 0; i < (stringNum-7)/4; i++)
+		{
+			bool *nsAllRandom0 = new bool[nodeNum];
+			seedGeneratorDirectRandom(nsAllRandom0, nodeNum, 0.05, userNum, users);
+			GenGroup.push_back(nodeString(nodeNum, nsAllRandom0));
+			delete[] nsAllRandom0;
+		}
+
+		for (int i = 0; i < (stringNum-7)/4; i++)
+		{
+			bool *nsAllRandom0 = new bool[nodeNum];
+			seedGeneratorDirectRandom(nsAllRandom0, nodeNum, 0.1, userNum, users);
+			GenGroup.push_back(nodeString(nodeNum, nsAllRandom0));
+			delete[] nsAllRandom0;
+		}
+
+		for (int i = 0; i < (stringNum-7)/4; i++)
+		{
+			bool *nsAllRandom0 = new bool[nodeNum];
+			seedGeneratorDirectRandom(nsAllRandom0, nodeNum, 0.2, userNum, users);
+			GenGroup.push_back(nodeString(nodeNum, nsAllRandom0));
+			delete[] nsAllRandom0;
+		}
+
+		for (int i = 0; i < (stringNum-7)/4; i++)
+		{
+			bool *nsAllRandom0 = new bool[nodeNum];
+			seedGeneratorDirectRandom(nsAllRandom0, nodeNum, 0.3, userNum, users);
+			GenGroup.push_back(nodeString(nodeNum, nsAllRandom0));
+			delete[] nsAllRandom0;
 		}
 
 		while (true)
@@ -200,7 +197,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num, char * filename)
 			for (int i = 0; i < stringNum; i++)
 			{
 				bool * ndstring = GenGroup[i].getNdstring();
-				MCMF minCostMaxFlowAlgorithm(userNum, users, nodeNum, ndstring, routeNum, deployCost, *graph, DijUpdateRound, true);
+				MCMF minCostMaxFlowAlgorithm(userNum, users, nodeNum, ndstring, routeNum, deployCost, *graph, DijUpdateRound);
 				int cost = minCostMaxFlowAlgorithm.getTotalCost();
 				GenGroup[i].setTotalCost(cost);
 				vector<solution> tempSolutions = minCostMaxFlowAlgorithm.getSolution();
